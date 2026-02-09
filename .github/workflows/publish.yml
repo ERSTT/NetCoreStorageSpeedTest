@@ -25,12 +25,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            8.0.x
-
-      - name: Restore dependencies
-        run: dotnet restore CPDT_Console/CPDT_Console.csproj -r ${{ matrix.rid }}
+          dotnet-version: '8.0.x'
 
       - name: Publish
         run: |
@@ -40,8 +35,12 @@ jobs:
           --self-contained true \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=false \
+          -p:PublishReadyToRun=false \
           -p:CheckEolTargetFramework=false \
           -o ./publish/${{ matrix.name }}
+
+      - name: List files (Debug)
+        run: ls -R ./publish/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
