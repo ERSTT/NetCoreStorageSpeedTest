@@ -25,18 +25,24 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # 使用最新的 LTS SDK
+          dotnet-version: '8.0.x'
+
+      - name: Upgrade Project to .NET 8
+        # 核心步骤：直接修改所有项目文件，将 net6.0 替换为 net8.0
+        # 这样 restore 和 publish 时的目标框架就能完全匹配
+        run: |
+          find . -name "*.csproj" -exec sed -i 's/<TargetFramework>net6.0<\/TargetFramework>/<TargetFramework>net8.0<\/TargetFramework>/g' {} +
+
+      - name: Restore
+        run: dotnet restore CPDT_Console/CPDT_Console.csproj -r ${{ matrix.rid }}
 
       - name: Build
         run: |
-          # 关键点：
-          # 1. 使用 -f net8.0 强制将项目升级到 .NET 8 运行环境
-          # 2. 依然保留 self-contained 以便在 Unraid 上直接运行
-          # 3. 包含原生库提取，解决 MonoPosixHelper 问题
           dotnet publish CPDT_Console/CPDT_Console.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
           -f net8.0 \
+          --no-restore \
           --self-contained true \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=false \
