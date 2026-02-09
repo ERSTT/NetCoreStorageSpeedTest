@@ -27,20 +27,25 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Fix Dependencies and Framework
+        run: |
+          find . -name "*.csproj" -exec sed -i 's/<TargetFramework>net6.0<\/TargetFramework>/<TargetFramework>net8.0<\/TargetFramework>/g' {} +
+          find . -name "*.csproj" -exec sed -i 's/<PublishTrimmed>true<\/PublishTrimmed>/<PublishTrimmed>false<\/PublishTrimmed>/g' {} +
+
+      - name: Restore
+        run: dotnet restore CPDT_Console/CPDT_Console.csproj -r ${{ matrix.rid }}
+
       - name: Publish
         run: |
           dotnet publish CPDT_Console/CPDT_Console.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
+          --no-restore \
           --self-contained true \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=false \
-          -p:PublishReadyToRun=false \
           -p:CheckEolTargetFramework=false \
           -o ./publish/${{ matrix.name }}
-
-      - name: List files (Debug)
-        run: ls -R ./publish/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
