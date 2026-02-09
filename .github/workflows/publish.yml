@@ -25,39 +25,22 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '6.0.x' # 既然项目写的是 6.0，我们先用 6.0
 
-      - name: Diagnostic - List Files
-        # 这一步是为了确认文件夹名称的大小写是否正确
-        run: ls -R
-
-      - name: Fix All Project Files
-        # 1. 递归找到所有 .csproj 文件
-        # 2. 强制将所有 TargetFramework 修改为 net8.0
-        # 3. 强制关闭所有 PublishTrimmed (这个最容易导致 ARM64 编译报错)
+      - name: Build
         run: |
-          find . -name "*.csproj" -exec sed -i 's/<TargetFramework>.*<\/TargetFramework>/<TargetFramework>net8.0<\/TargetFramework>/g' {} +
-          find . -name "*.csproj" -exec sed -i 's/<PublishTrimmed>.*<\/PublishTrimmed>/<PublishTrimmed>false<\/PublishTrimmed>/g' {} +
-
-      - name: Restore
-        # 指向主项目文件
-        run: dotnet restore CPDT_Console/CPDT_Console.csproj -r ${{ matrix.rid }}
-
-      - name: Publish
-        # 增加 /p:CopyOutputSymbolsToPublishDirectory=false 减少不必要的分析报错
-        run: |
+          # 尝试最基础的发布，禁用所有可能干扰的属性
           dotnet publish CPDT_Console/CPDT_Console.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
-          --no-restore \
           --self-contained true \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=false \
           -p:CheckEolTargetFramework=false \
-          -p:CopyOutputSymbolsToPublishDirectory=false \
           -o ./publish/${{ matrix.name }}
 
       - name: Upload Artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-binary
@@ -66,7 +49,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') && success()
     permissions:
       contents: write
     steps:
