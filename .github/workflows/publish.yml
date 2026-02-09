@@ -1,0 +1,62 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: linux-x64
+            target: linux-x64
+          - rid: linux-arm64
+            target: linux-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '5.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish
+        run: |
+          dotnet publish -c Release \
+          -r ${{ matrix.rid }} \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:PublishTrimmed=true \
+          -o ./publish/${{ matrix.target }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-binary
+          path: ./publish/${{ matrix.target }}/NetCoreStorageSpeedTest
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            linux-x64-binary/NetCoreStorageSpeedTest
+            linux-arm64-binary/NetCoreStorageSpeedTest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
