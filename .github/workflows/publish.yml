@@ -28,11 +28,11 @@ jobs:
           dotnet-version: '5.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore NetCoreStorageSpeedTest/NetCoreStorageSpeedTest.csproj
+        run: dotnet restore CPDT_Console/CPDT_Console.csproj -r ${{ matrix.rid }}
 
       - name: Publish
         run: |
-          dotnet publish NetCoreStorageSpeedTest/NetCoreStorageSpeedTest.csproj \
+          dotnet publish CPDT_Console/CPDT_Console.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
           --self-contained true \
@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-binary
-          path: ./publish/${{ matrix.name }}/NetCoreStorageSpeedTest
+          path: ./publish/${{ matrix.name }}/CPDT_Console
 
   release:
     needs: build
@@ -62,5 +62,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            all-artifacts/linux-x64-binary/NetCoreStorageSpeedTest
-            all-artifacts/linux-arm64-binary/NetCoreStorageSpeedTest
+            all-artifacts/linux-x64-binary/CPDT_Console
+            all-artifacts/linux-arm64-binary/CPDT_Console
