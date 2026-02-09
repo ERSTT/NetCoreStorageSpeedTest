@@ -25,13 +25,18 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x' # 使用最新的 LTS SDK
 
       - name: Build
         run: |
+          # 关键点：
+          # 1. 使用 -f net8.0 强制将项目升级到 .NET 8 运行环境
+          # 2. 依然保留 self-contained 以便在 Unraid 上直接运行
+          # 3. 包含原生库提取，解决 MonoPosixHelper 问题
           dotnet publish CPDT_Console/CPDT_Console.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
+          -f net8.0 \
           --self-contained true \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=false \
@@ -41,7 +46,6 @@ jobs:
           -p:EmbedUntrackedSources=false \
           -p:DebugType=none \
           -p:IncludeNativeLibrariesForSelfExtract=true \
-          -p:IncludeAllContentForSelfExtract=true \
           -o ./publish/${{ matrix.name }}
 
       - name: Upload Artifacts
