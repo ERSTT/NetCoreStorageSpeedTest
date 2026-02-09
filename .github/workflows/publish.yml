@@ -40,6 +40,8 @@ jobs:
           -p:SourceLinkCreate=false \
           -p:EmbedUntrackedSources=false \
           -p:DebugType=none \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:IncludeAllContentForSelfExtract=true \
           -o ./publish/${{ matrix.name }}
 
       - name: Upload Artifacts
